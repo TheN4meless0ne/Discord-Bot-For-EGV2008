@@ -54,5 +54,5 @@ if __name__ == '__main__':
     except FileNotFoundError:
         print('Finner ikke token.txt, har du kjørt setup.py og limt inn din token?')
     finally:
-        # Vent 5 sekunder før EventLoop lukkes, større og mindre lesbar feilmelding.
+        # Vent 5 sekunder før EventLoop lukkes, som gir en større og mindre lesbar feilmelding.
         sleep(5)
