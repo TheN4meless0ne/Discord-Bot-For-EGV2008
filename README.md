@@ -2,9 +2,14 @@
 Super enkel Discord bot blueprint. Bruk denne som utgangspunkt for å lage din egen Discord bot.
 
 ## Oppsett
-Installer dependencies:
+Installer dependencies (discord):
 ```bash
 pip install -r requirements.txt
+```
+
+Eventuelt kan du finne den i PyCharm sin "Packages" fane, eller kjøre følgende i terminalen:
+```bash
+pip install discord
 ```
 
 ## Lag botten
