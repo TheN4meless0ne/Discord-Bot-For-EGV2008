@@ -51,6 +51,8 @@ if __name__ == '__main__':
               'på https://discord.com/developers/applications/ (Under Privileged Gateway Intents)')
     except discord.errors.LoginFailure:
         print('Kunne ikke logge på botten, bruker du riktig token i token.txt?')
+    except FileNotFoundError:
+        print('Finner ikke token.txt, har du kjørt setup.py og limt inn din token?')
     finally:
         # Vent 5 sekunder før EventLoop lukkes, større og mindre lesbar feilmelding.
         sleep(5)
