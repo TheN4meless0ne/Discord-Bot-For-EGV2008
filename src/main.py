@@ -20,9 +20,9 @@ tokens = load_tokens()
 DISCORD_TOKEN = tokens["DISCORD_TOKEN"]
 TWITCH_CLIENT_ID = tokens["TWITCH_CLIENT_ID"]
 TWITCH_CLIENT_SECRET = tokens["TWITCH_CLIENT_SECRET"]
-DISCORD_CHANNEL_ID = tokens["DISCORD_CHANNEL_ID"]
+DISCORD_CHANNEL_ID = int(tokens["DISCORD_CHANNEL_ID"])
 
-TWITCH_USERNAMES = ["nmlsval", "EGV2008"]
+TWITCH_USERNAMES = ["EGV2008", "nmlsval"]
 CHECK_INTERVAL = 60  # Time in seconds between checks
 
 async def get_twitch_access_token():
