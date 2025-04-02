@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  discord-bot:
+    build: .
+    volumes:
+      - ./src:/app/src
+      - ./token.txt:/app/token.txt
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID}
+      - TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET}
+      - DISCORD_CHANNEL_ID=${DISCORD_CHANNEL_ID}
+    command: python src/main.py
+    restart: always
