@@ -15,5 +15,8 @@ COPY src/ ./src/
 # Copy the token file (ensure this file is present in the same directory as the Dockerfile)
 COPY token.txt .
 
+# Copy the Twitch usernames file
+COPY twitch_usernames.json .
+
 # Command to run the bot
 CMD ["python", "src/main.py"]
