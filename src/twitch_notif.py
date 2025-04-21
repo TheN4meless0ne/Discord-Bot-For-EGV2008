@@ -35,9 +35,9 @@ async def notify_when_live(bot):
                 for user in live_users:
                     if user not in notified_users:
                         if user == STREAMER:
-                            await channel.send(f"I'm now live on Twitch!! Come say hi!! https://www.twitch.tv/{user} @everyone")
+                            await channel.send(f"I'm now live on Twitch!! Come say hi!! https://www.twitch.tv/{user} @Wants Alerts")
                         else:
-                            await channel.send(f"{user} is now live on Twitch!! Go check them out!! https://www.twitch.tv/{user} @everyone")
+                            await channel.send(f"{user} is now live on Twitch!! Go check them out!! https://www.twitch.tv/{user} @Wants Alerts")
                         notified_users.add(user)
                 # Remove users who are no longer live from the notified list
                 notified_users = notified_users.intersection(live_users)
