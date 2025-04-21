@@ -5,73 +5,18 @@ import aiohttp
 import asyncio
 from time import sleep
 import json
+from utils import save_twitch_usernames, TWITCH_USERNAMES, tokens
+from commands import commands_list
 
 intents = discord.Intents.default()
 intents.message_content = True  # Må aktiveres under Privileged Gateway Intents på https://discord.com/developers/applications/
 bot = commands.Bot(command_prefix="/", intents=intents)
 
-# Load tokens from token.txt
-def load_tokens():
-    tokens = {}
-    with open("token.txt", "r") as file:
-        for line in file:
-            key, value = line.strip().split("=")
-            tokens[key] = value
-    return tokens
-
-# Load Twitch usernames from a file
-def load_twitch_usernames():
-    try:
-        with open("twitch_usernames.json", "r") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return ["EGV2008", "nmlsval"]  # Default usernames if the file doesn't exist
-
-# Save Twitch usernames to a file
-def save_twitch_usernames(usernames):
-    with open("twitch_usernames.json", "w") as file:
-        json.dump(usernames, file)
-
-tokens = load_tokens()
 DISCORD_TOKEN = tokens["DISCORD_TOKEN"]
 TWITCH_CLIENT_ID = tokens["TWITCH_CLIENT_ID"]
 TWITCH_CLIENT_SECRET = tokens["TWITCH_CLIENT_SECRET"]
-DISCORD_CHANNEL_ID = int(tokens["DISCORD_CHANNEL_ID"])
-TWITCH_USERNAMES = load_twitch_usernames() # Load the usernames at startup
-CHECK_INTERVAL = 60  # Time in seconds between checks
-
-# Define the /addtwitch command
-@bot.tree.command(name="addtwitch", description="Add a Twitch username to the list (Moderator only).")
-@app_commands.describe(username="The Twitch username to add.")
-async def addtwitch(interaction: discord.Interaction, username: str):
-    # Check if the user has the "Mod" role
-    if discord.utils.get(interaction.user.roles, name="Mod"):
-        username = username.strip()
-        if username not in TWITCH_USERNAMES:
-            TWITCH_USERNAMES.append(username)
-            save_twitch_usernames(TWITCH_USERNAMES)  # Save the updated list to the file
-            await interaction.response.send_message(f"Added {username} to the Twitch usernames list.", ephemeral=True)
-        else:
-            await interaction.response.send_message(f"{username} is already in the Twitch usernames list.", ephemeral=True)
-    else:
-        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-
-# Define the /rmtwitch command
-print("Registering /rmtwitch command")
-@bot.tree.command(name="rmtwitch", description="Remove a Twitch username from the list (Moderator only).")
-@app_commands.describe(username="The Twitch username to remove.")
-async def rmtwitch(interaction: discord.Interaction, username: str):
-    # Check if the user has the "Mod" role
-    if discord.utils.get(interaction.user.roles, name="Mod"):
-        username = username.strip()
-        if username in TWITCH_USERNAMES:
-            TWITCH_USERNAMES.remove(username)
-            save_twitch_usernames(TWITCH_USERNAMES)  # Save the updated list to the file            
-            await interaction.response.send_message(f"Removed {username} from the Twitch usernames list.", ephemeral=True)
-        else:
-            await interaction.response.send_message(f"{username} is not in the Twitch usernames list.", ephemeral=True)
-    else:
-        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+NOTIF_CHANNEL_ID = int(tokens["NOTIF_CHANNEL_ID"])
+CHECK_INTERVAL = 60  # Sekunder mellom hver sjekk
 
 async def get_twitch_access_token():
     """Fetch an access token from Twitch."""
@@ -99,7 +44,7 @@ async def check_live_status(access_token, usernames):
             params = {"user_login": username}
             async with session.get(url, headers=headers, params=params) as response:
                 data = await response.json()
-                if len(data["data"]) > 0:  # If data is not empty, the user is live
+                if len(data["data"]) > 0: # User is live
                     live_users.append(username)
     return live_users
 
@@ -110,7 +55,7 @@ async def notify_when_live():
     while True:
         try:
             live_users = await check_live_status(access_token, TWITCH_USERNAMES)
-            channel = bot.get_channel(DISCORD_CHANNEL_ID)
+            channel = bot.get_channel(NOTIF_CHANNEL_ID)
             if channel:
                 for user in live_users:
                     if user not in notified_users:
@@ -126,11 +71,13 @@ async def notify_when_live():
         await asyncio.sleep(CHECK_INTERVAL)
 
 
-# Event to sync the slash commands with Discord
+# Registrerer kommandene i commands.py og legger dem til i botten.
 @bot.event
 async def on_ready():
-    bot.loop.create_task(notify_when_live())  # Start the live notification task
-    await bot.tree.sync()  # Sync the slash commands with Discord
+    for command in commands_list: # commands_list er en liste med alle kommandoene og ligger i commands.py
+        bot.tree.add_command(command)
+    bot.loop.create_task(notify_when_live())
+    await bot.tree.sync()
     print(f"Logged in as {bot.user}")
 
 
