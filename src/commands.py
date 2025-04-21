@@ -8,7 +8,7 @@ SOCIALS_CHANNEL_ID = int(tokens["SOCIALS_CHANNEL_ID"])
 @app_commands.command(name="addtwitch", description="Add a Twitch username to the list (Moderator only).")
 @app_commands.describe(username="The Twitch username to add.")
 async def addtwitch(interaction: discord.Interaction, username: str):
-    if discord.utils.get(interaction.user.roles, name="Mod, Streamer"):
+    if discord.utils.get(interaction.user.roles, name="Mod") or discord.utils.get(interaction.user.roles, name="Streamer"):
         username = username.strip()
         if username not in TWITCH_USERNAMES:
             TWITCH_USERNAMES.append(username)
@@ -29,7 +29,7 @@ async def addtwitch(interaction: discord.Interaction, username: str):
 @app_commands.command(name="rmtwitch", description="Remove a Twitch username from the list (Moderator only).")
 @app_commands.describe(username="The Twitch username to remove.")
 async def rmtwitch(interaction: discord.Interaction, username: str):
-    if discord.utils.get(interaction.user.roles, name="Mod, Streamer"):
+    if discord.utils.get(interaction.user.roles, name="Mod") or discord.utils.get(interaction.user.roles, name="Streamer"):
         username = username.strip()
         if username in TWITCH_USERNAMES:
             TWITCH_USERNAMES.remove(username)
