@@ -4,7 +4,7 @@ from utils import save_twitch_usernames, tokens, TWITCH_USERNAMES, STREAMER
 
 SOCIALS_CHANNEL_ID = int(tokens["SOCIALS_CHANNEL_ID"])
 
-# /addtwitch
+# /addtwitch (Moderator only)
 @app_commands.command(name="addtwitch", description="Add a Twitch username to the list (Moderator only).")
 @app_commands.describe(username="The Twitch username to add.")
 async def addtwitch(interaction: discord.Interaction, username: str):
@@ -25,7 +25,7 @@ async def addtwitch(interaction: discord.Interaction, username: str):
             "You do not have permission to use this command.", ephemeral=True
         )
 
-# /rmtwitch
+# /rmtwitch (Moderator only)
 @app_commands.command(name="rmtwitch", description="Remove a Twitch username from the list (Moderator only).")
 @app_commands.describe(username="The Twitch username to remove.")
 async def rmtwitch(interaction: discord.Interaction, username: str):
