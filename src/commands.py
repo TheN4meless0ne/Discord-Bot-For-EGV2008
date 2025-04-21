@@ -1,6 +1,6 @@
 import discord
 from discord import app_commands
-from utils import save_twitch_usernames, TWITCH_USERNAMES, tokens
+from utils import save_twitch_usernames, tokens, TWITCH_USERNAMES, STREAMER
 
 SOCIALS_CHANNEL_ID = int(tokens["SOCIALS_CHANNEL_ID"])
 
@@ -52,7 +52,7 @@ async def socials(interaction: discord.Interaction):
     socials_channel = interaction.guild.get_channel(SOCIALS_CHANNEL_ID)
     if socials_channel:
         await interaction.response.send_message(
-            f"EGV2008's socials and links can be found in {socials_channel.mention}.", ephemeral=True
+            f"{STREAMER}'s socials and links can be found in {socials_channel.mention}.", ephemeral=True
         )
     else:
         await interaction.response.send_message(

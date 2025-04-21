@@ -7,7 +7,7 @@ def load_twitch_usernames():
         with open("twitch_usernames.json", "r") as file:
             return json.load(file)
     except FileNotFoundError:
-        return ["EGV2008", "nmlsval"]
+        return [STREAMER]
 
 # Save Twitch usernames to a file
 def save_twitch_usernames(usernames):
@@ -26,3 +26,4 @@ def load_tokens():
 # Shared variables
 TWITCH_USERNAMES = load_twitch_usernames()
 tokens = load_tokens()
+STREAMER = "EGV2008"

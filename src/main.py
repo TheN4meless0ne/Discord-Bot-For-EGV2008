@@ -5,7 +5,7 @@ import aiohttp
 import asyncio
 from time import sleep
 import json
-from utils import save_twitch_usernames, TWITCH_USERNAMES, tokens
+from utils import tokens, TWITCH_USERNAMES, STREAMER
 from commands import commands_list
 
 intents = discord.Intents.default()
@@ -59,7 +59,7 @@ async def notify_when_live():
             if channel:
                 for user in live_users:
                     if user not in notified_users:
-                        if user == "EGV2008":
+                        if user == STREAMER:
                             await channel.send(f"I'm now live on Twitch!! Come say hi!! https://www.twitch.tv/{user} @everyone")
                         else:
                             await channel.send(f"{user} is now live on Twitch!! Go check them out!! https://www.twitch.tv/{user} @everyone")
