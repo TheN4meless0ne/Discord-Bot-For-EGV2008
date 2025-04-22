@@ -1,0 +1,5 @@
+DISCORD_TOKEN=your_discord_token
+TWITCH_CLIENT_ID=your_twitch_client_id
+TWITCH_CLIENT_SECRET=your_twitch_client_secret
+NOTIF_CHANNEL_ID=twitch_notification_channel_id
+SOCIALS_CHANNEL_ID=socials/links_channel_id
