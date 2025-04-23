@@ -10,7 +10,6 @@ intents.message_content = True  # Må aktiveres under Privileged Gateway Intents
 bot = commands.Bot(command_prefix="/", intents=intents)
 
 DISCORD_TOKEN = tokens["DISCORD_TOKEN"]
-NOTIF_CHANNEL_ID = int(tokens["NOTIF_CHANNEL_ID"])
 
 
 # Registrerer kommandene i commands.py og legger dem til i botten.
