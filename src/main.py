@@ -3,7 +3,6 @@ from discord.ext import commands
 from time import sleep
 from utils import tokens
 from commands import commands_list
-from commands_mod import mod_commands
 from twitch_notif import notify_when_live
 
 intents = discord.Intents.default()
@@ -17,8 +16,6 @@ DISCORD_TOKEN = tokens["DISCORD_TOKEN"]
 @bot.event
 async def on_ready():
     for command in commands_list:  # commands_list er en liste med alle kommandoene og ligger i commands.py
-        bot.tree.add_command(command)
-    for command in mod_commands:  # mod_commands er en liste med alle kommandoene og ligger i commands_mod.py
         bot.tree.add_command(command)
     bot.loop.create_task(notify_when_live(bot))  # Pass the bot instance here
     await bot.tree.sync()
@@ -42,7 +39,7 @@ async def on_message(message):
 # Til slutt; kjør botten med token fra token.txt (med litt tips og feilsøking)
 # Du kan ignorere dette.
 if __name__ == '__main__':
-    print('Starting ')
+    print('Starter botten.')
     try:
         bot.run(DISCORD_TOKEN)
     except discord.errors.PrivilegedIntentsRequired:
