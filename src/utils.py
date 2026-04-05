@@ -6,19 +6,23 @@ from dotenv import load_dotenv
 load_dotenv()
 
 STREAMER = "EGV2008"
+TWITCH_USERNAMES_FILE = os.getenv("TWITCH_USERNAMES_FILE", "twitch_usernames.json")
 
 # Hent Twitch-brukernavn fra en fil
 # Hvis filen ikke finnes, returner en liste med standard brukernavn
 def load_twitch_usernames():
     try:
-        with open("twitch_usernames.json", "r") as file:
+        with open(TWITCH_USERNAMES_FILE, "r") as file:
             return json.load(file)
     except FileNotFoundError:
         return [STREAMER]
 
 # Save Twitch usernames to a file
 def save_twitch_usernames(usernames):
-    with open("twitch_usernames.json", "w") as file:
+    usernames_dir = os.path.dirname(TWITCH_USERNAMES_FILE)
+    if usernames_dir:
+        os.makedirs(usernames_dir, exist_ok=True)
+    with open(TWITCH_USERNAMES_FILE, "w") as file:
         json.dump(usernames, file)
 
 def load_tokens():
