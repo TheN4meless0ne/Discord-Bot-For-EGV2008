@@ -1,9 +1,12 @@
 import discord
 from discord.ext import commands
 from time import sleep
-from utils import tokens
 from commands import commands_list
 from twitch_notif import notify_when_live
+from utils import tokens
+from dotenv import load_dotenv
+
+load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True  # Må aktiveres under Privileged Gateway Intents på https://discord.com/developers/applications/
@@ -36,7 +39,7 @@ async def on_message(message):
 # se https://discordpy.readthedocs.io/en/latest/api.html#event-reference
 
 
-# Til slutt; kjør botten med token fra token.txt (med litt tips og feilsøking)
+# Til slutt; kjør botten med token fra .env (med litt tips og feilsøking)
 # Du kan ignorere dette.
 if __name__ == '__main__':
     print('Starter botten.')
@@ -46,9 +49,9 @@ if __name__ == '__main__':
         print('OBS! Din bot mangler "Message Content Intent", legg til denne \n'
               'på https://discord.com/developers/applications/ (Under Privileged Gateway Intents)')
     except discord.errors.LoginFailure:
-        print('Kunne ikke logge på botten, bruker du riktig token i token.txt?')
-    except FileNotFoundError:
-        print('Finner ikke token.txt, har du kjørt setup.py og limt inn din token?')
+        print('Kunne ikke logge på botten, bruker du riktig DISCORD_TOKEN i .env?')
+    except ValueError as e:
+        print(f'Feil i miljøvariabler: {e}. Sjekk .env-filen din.')
     finally:
         # Vent 5 sekunder før EventLoop lukkes, som gir en større og mindre lesbar feilmelding.
         sleep(5)
