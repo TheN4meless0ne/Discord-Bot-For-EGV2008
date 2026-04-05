@@ -1,5 +1,11 @@
 import json
+import os
 import aiohttp
+from dotenv import load_dotenv
+
+load_dotenv()
+
+STREAMER = "EGV2008"
 
 # Hent Twitch-brukernavn fra en fil
 # Hvis filen ikke finnes, returner en liste med standard brukernavn
@@ -15,13 +21,34 @@ def save_twitch_usernames(usernames):
     with open("twitch_usernames.json", "w") as file:
         json.dump(usernames, file)
 
-# Load tokens from token.txt
 def load_tokens():
+    """Load required config values from environment variables (.env)."""
+    required_keys = [
+        "DISCORD_TOKEN",
+        "TWITCH_CLIENT_SECRET",
+        "TWITCH_CLIENT_ID",
+        "SOCIALS_CHANNEL_ID",
+        "NOTIF_CHANNEL_ID",
+        "GUILD_ID",
+    ]
     tokens = {}
-    with open("token.txt", "r") as file:
-        for line in file:
-            key, value = line.strip().split("=")
+    missing = []
+
+    for key in required_keys:
+        value = os.getenv(key)
+        if value is None or value == "":
+            missing.append(key)
+        else:
             tokens[key] = value
+
+    if missing:
+        missing_str = ", ".join(missing)
+        raise ValueError(
+            "Missing required environment variables: "
+            f"{missing_str}. If you are running Docker directly, use --env-file .env "
+            "or pass each variable with -e."
+        )
+
     return tokens
 
 async def get_twitch_access_token():
@@ -43,5 +70,3 @@ TWITCH_USERNAMES = load_twitch_usernames()
 
 TWITCH_CLIENT_SECRET = tokens["TWITCH_CLIENT_SECRET"]
 TWITCH_CLIENT_ID = tokens["TWITCH_CLIENT_ID"]
-
-STREAMER = "EGV2008"
