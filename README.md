@@ -47,3 +47,30 @@ Botten ligger i `main.py`. Du kan redigere denne filen for å legge til funksjon
 Dokumentasjon for discord.py: https://discordpy.readthedocs.io/en/stable/intro.html
 
 Å lese dokumentasjon er en god øvelse!
+
+## Deploy til Azure Container Apps (kort)
+Workflow for deploy ligger i `.github/workflows/deploy-aca.yml`.
+
+Før deploy må dette settes i GitHub repository settings:
+
+Variables:
+- `AZURE_RESOURCE_GROUP`
+- `AZURE_LOCATION`
+- `AZURE_ACR_NAME`
+- `AZURE_CONTAINERAPPS_ENV`
+- `AZURE_CONTAINER_APP_NAME`
+
+Secrets:
+- `AZURE_CLIENT_ID`
+- `AZURE_TENANT_ID`
+- `AZURE_SUBSCRIPTION_ID`
+- `DISCORD_TOKEN`
+- `TWITCH_CLIENT_ID`
+- `TWITCH_CLIENT_SECRET`
+- `NOTIF_CHANNEL_ID`
+- `SOCIALS_CHANNEL_ID`
+- `GUILD_ID`
+
+Når dette er satt kan du deploye ved å:
+- pushe til `main`, eller
+- starte workflowen manuelt fra GitHub Actions (`Deploy to Azure Container Apps`).
