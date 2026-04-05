@@ -46,6 +46,24 @@ async def rmtwitch(interaction: discord.Interaction, username: str):
             "You do not have permission to use this command.", ephemeral=True
         )
 
+# /listtwitch (Moderator only)
+@app_commands.command(name="listtwitch", description="List all Twitch usernames being monitored (Moderator only).")
+async def listtwitch(interaction: discord.Interaction):
+    if discord.utils.get(interaction.user.roles, name="Mod") or discord.utils.get(interaction.user.roles, name="Streamer"):
+        if TWITCH_USERNAMES:
+            usernames_list = "\n".join(TWITCH_USERNAMES)
+            await interaction.response.send_message(
+                f"Currently monitored Twitch usernames:\n{usernames_list}", ephemeral=True
+            )
+        else:
+            await interaction.response.send_message(
+                "No Twitch usernames are currently being monitored.", ephemeral=True
+            )
+    else:
+        await interaction.response.send_message(
+            "You do not have permission to use this command.", ephemeral=True
+        )
+
 # /socials
 @app_commands.command(name="socials", description="Send to links channel.")
 async def socials(interaction: discord.Interaction):
@@ -60,4 +78,4 @@ async def socials(interaction: discord.Interaction):
         )
 
 # List of commands to register with the bot
-commands_list = [addtwitch, rmtwitch, socials]
+commands_list = [addtwitch, rmtwitch, listtwitch, socials]

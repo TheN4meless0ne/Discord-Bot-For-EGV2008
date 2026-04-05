@@ -1,4 +1,10 @@
+# Ignore Python bytecode files and cache directories
+*.pyc
 __pycache__/
 
+# Ignore the .qodo directory and environment variable file
 .qodo
 .env
+
+# macOS specific files
+.DS_Store
