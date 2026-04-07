@@ -8,7 +8,7 @@ from utils import get_twitch_access_token
 NOTIF_CHANNEL_ID = int(tokens["NOTIF_CHANNEL_ID"])
 GUILD_ID = int(tokens["GUILD_ID"])
 ROLE = "Wants Alerts"
-CHECK_INTERVAL = 60  # Sekunder mellom hver sjekk
+CHECK_INTERVAL = 360  # Sekunder mellom hver sjekk
 
 async def check_live_status(access_token, usernames):
     """Check if any Twitch users are live."""
