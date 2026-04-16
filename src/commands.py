@@ -19,6 +19,17 @@ def has_permission(member):
         discord.utils.get(member.roles, name="Streamer")
     )
 
+def chunk_list(items, limit=1900):
+    chunk = ""
+    for item in items:
+        if len(chunk) + len(item) + 1 > limit:
+            yield chunk
+            chunk = item + "\n"
+        else:
+            chunk += item + "\n"
+    if chunk:
+        yield chunk
+
 # /addtwitch (Moderator only)
 # /addtwitch
 @app_commands.command(name="addtwitch", description="Add a Twitch username (Moderator only).")
@@ -75,22 +86,46 @@ async def rmtwitch(interaction: discord.Interaction, username: str):
         )
 
 # /listtwitch (Moderator only)
-@app_commands.command(name="listtwitch", description="List all Twitch usernames being monitored (Moderator only).")
+@app_commands.command(
+    name="listtwitch",
+    description="List all Twitch usernames being monitored (Moderator only)."
+)
 async def listtwitch(interaction: discord.Interaction):
-    if not has_permission(interaction.user):
+    if not interaction.guild:
         await interaction.response.send_message(
-            "You do not have permission to use this command.", ephemeral=True
+            "This command can only be used in a server.",
+            ephemeral=True
         )
         return
-  
-    if TWITCH_USERNAMES:
-        usernames_list = "\n".join(TWITCH_USERNAMES)
+
+    if not has_permission(interaction.user):
         await interaction.response.send_message(
-            f"Currently monitored Twitch usernames:\n{usernames_list}", ephemeral=True
+            "You do not have permission to use this command.",
+            ephemeral=True
         )
+        return
+
+    usernames = load_twitch_usernames()
+
+    if usernames:
+        message = "Currently monitored Twitch usernames:\n"
+
+        # safe Discord chunking
+        full_text = "\n".join(usernames)
+
+        for i, chunk in enumerate(chunk_list(usernames)):
+            if i == 0:
+                await interaction.response.send_message(
+                    message + chunk,
+                    ephemeral=True
+                )
+            else:
+                await interaction.followup.send(chunk, ephemeral=True)
+
     else:
         await interaction.response.send_message(
-            "No Twitch usernames are currently being monitored.", ephemeral=True
+            "No Twitch usernames are currently being monitored.",
+            ephemeral=True
         )
 
 # /socials
