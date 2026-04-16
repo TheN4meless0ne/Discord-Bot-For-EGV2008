@@ -1,57 +1,60 @@
+import os
+import asyncio
 import discord
 from discord.ext import commands
-from time import sleep
 from commands import commands_list
 from twitch_notif import notify_when_live
-from utils import tokens
+from utils import get_env_variable
 from dotenv import load_dotenv
 
+# Load .env locally (ignored in Azure)
 load_dotenv()
 
+DISCORD_TOKEN = get_env_variable("DISCORD_TOKEN")
+
 intents = discord.Intents.default()
-intents.message_content = True  # Må aktiveres under Privileged Gateway Intents på https://discord.com/developers/applications/
+intents.message_content = True
+
 bot = commands.Bot(command_prefix="/", intents=intents)
 
-DISCORD_TOKEN = tokens["DISCORD_TOKEN"]
 
-
-# Registrerer kommandene i commands.py og legger dem til i botten.
+# Registrer kommands from commands.py and adds to Discord bot
 @bot.event
 async def on_ready():
-    for command in commands_list:  # commands_list er en liste med alle kommandoene og ligger i commands.py
-        bot.tree.add_command(command)
-    bot.loop.create_task(notify_when_live(bot))  # Pass the bot instance here
-    await bot.tree.sync()
     print(f"Logged in as {bot.user}")
 
+    for command in commands_list:
+        bot.tree.add_command(command)
 
+    print("Starting Twitch notifier...")
+    asyncio.create_task(notify_when_live(bot))
+
+    await bot.tree.sync()
+
+# Run Discord bot
 @bot.event
 async def on_message(message):
-    """on_message kjøres når botten mottar en melding."""
-    text = message.content
-    user = message.author
-
-    # Sjekker om meldingen er fra boten selv, for å unngå at den svarer på seg selv.
-    if user == bot.user:
+    if message.author == bot.user:
         return
 
-# Det finnes flere ulike events man kan bruke til ulike formål,
-# se https://discordpy.readthedocs.io/en/latest/api.html#event-reference
+    await bot.process_commands(message)
 
 
-# Til slutt; kjør botten med token fra .env (med litt tips og feilsøking)
-# Du kan ignorere dette.
 if __name__ == '__main__':
-    print('Starter botten.')
-    try:
-        bot.run(DISCORD_TOKEN)
-    except discord.errors.PrivilegedIntentsRequired:
-        print('OBS! Din bot mangler "Message Content Intent", legg til denne \n'
-              'på https://discord.com/developers/applications/ (Under Privileged Gateway Intents)')
-    except discord.errors.LoginFailure:
-        print('Kunne ikke logge på botten, bruker du riktig DISCORD_TOKEN i .env?')
-    except ValueError as e:
-        print(f'Feil i miljøvariabler: {e}. Sjekk .env-filen din.')
-    finally:
-        # Vent 5 sekunder før EventLoop lukkes, som gir en større og mindre lesbar feilmelding.
-        sleep(5)
+    print("Starting bot...")
+
+    while True:
+        try:
+            bot.run(DISCORD_TOKEN)
+
+        except discord.errors.PrivilegedIntentsRequired:
+            print(
+                'Missing "Message Content Intent". Enable it at:\n'
+                'https://discord.com/developers/applications'
+            )
+
+        except discord.errors.LoginFailure:
+            print("Invalid DISCORD_TOKEN")
+
+        except Exception as e:
+            print(f"Bot crashed: {e}")

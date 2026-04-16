@@ -28,91 +28,53 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Ensure Container Apps extension
-        run: |
-          az extension add --name containerapp --upgrade
-
-      - name: Create resource group
-        run: |
-          az group create -n "${{ vars.AZURE_RESOURCE_GROUP }}" -l "${{ vars.AZURE_LOCATION }}"
-
-      - name: Ensure ACR exists
-        run: |
-          az acr create \
-            -n "${{ vars.AZURE_ACR_NAME }}" \
-            -g "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --sku Basic \
-            --admin-enabled true
-
-      - name: Ensure Container Apps environment exists
-        run: |
-          az containerapp env create \
-            -n "${{ vars.AZURE_CONTAINERAPPS_ENV }}" \
-            -g "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            -l "${{ vars.AZURE_LOCATION }}" || true
+      - name: Install containerapp extension
+        run: az extension add --name containerapp --upgrade
 
       - name: Build image in ACR
         run: |
           az acr build \
             -r "${{ vars.AZURE_ACR_NAME }}" \
             -t "${{ env.IMAGE_NAME }}:${{ github.sha }}" \
-            -t "${{ env.IMAGE_NAME }}:latest" \
             .
 
-      - name: Resolve registry credentials
+      - name: Get ACR login server
         id: acr
         run: |
           LOGIN_SERVER=$(az acr show -n "${{ vars.AZURE_ACR_NAME }}" --query loginServer -o tsv)
-          USERNAME=$(az acr credential show -n "${{ vars.AZURE_ACR_NAME }}" --query username -o tsv)
-          PASSWORD=$(az acr credential show -n "${{ vars.AZURE_ACR_NAME }}" --query passwords[0].value -o tsv)
           echo "login_server=$LOGIN_SERVER" >> "$GITHUB_OUTPUT"
-          echo "username=$USERNAME" >> "$GITHUB_OUTPUT"
-          echo "password=$PASSWORD" >> "$GITHUB_OUTPUT"
 
       - name: Create or update Container App
         run: |
-          az containerapp create \
+          az containerapp up \
             -n "${{ vars.AZURE_CONTAINER_APP_NAME }}" \
             -g "${{ vars.AZURE_RESOURCE_GROUP }}" \
             --environment "${{ vars.AZURE_CONTAINERAPPS_ENV }}" \
             --image "${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" \
-            --ingress internal \
-            --min-replicas 1 \
-            --max-replicas 1 \
-            --cpu 0.5 \
-            --memory 1Gi \
-            --registry-server "${{ steps.acr.outputs.login_server }}" \
-            --registry-username "${{ steps.acr.outputs.username }}" \
-            --registry-password "${{ steps.acr.outputs.password }}"
+            --ingress disabled
 
-          az containerapp update \
-            -n "${{ vars.AZURE_CONTAINER_APP_NAME }}" \
-            -g "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --image "${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-
-      - name: Set container app secrets
+      - name: Set secrets
         run: |
           az containerapp secret set \
             -n "${{ vars.AZURE_CONTAINER_APP_NAME }}" \
             -g "${{ vars.AZURE_RESOURCE_GROUP }}" \
             --secrets \
-            discord-token="${{ secrets.DISCORD_TOKEN }}" \
-            twitch-client-id="${{ secrets.TWITCH_CLIENT_ID }}" \
-            twitch-client-secret="${{ secrets.TWITCH_CLIENT_SECRET }}" \
-            notif-channel-id="${{ secrets.NOTIF_CHANNEL_ID }}" \
-            socials-channel-id="${{ secrets.SOCIALS_CHANNEL_ID }}" \
-            guild-id="${{ secrets.GUILD_ID }}"
+            DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}" \
+            TWITCH_CLIENT_ID="${{ secrets.TWITCH_CLIENT_ID }}" \
+            TWITCH_CLIENT_SECRET="${{ secrets.TWITCH_CLIENT_SECRET }}" \
+            NOTIF_CHANNEL_ID="${{ secrets.NOTIF_CHANNEL_ID }}" \
+            SOCIALS_CHANNEL_ID="${{ secrets.SOCIALS_CHANNEL_ID }}" \
+            GUILD_ID="${{ secrets.GUILD_ID }}"
 
-      - name: Bind app env vars to secrets
+      - name: Bind env vars
         run: |
           az containerapp update \
             -n "${{ vars.AZURE_CONTAINER_APP_NAME }}" \
             -g "${{ vars.AZURE_RESOURCE_GROUP }}" \
             --set-env-vars \
-            DISCORD_TOKEN=secretref:discord-token \
-            TWITCH_CLIENT_ID=secretref:twitch-client-id \
-            TWITCH_CLIENT_SECRET=secretref:twitch-client-secret \
-            NOTIF_CHANNEL_ID=secretref:notif-channel-id \
-            SOCIALS_CHANNEL_ID=secretref:socials-channel-id \
-            GUILD_ID=secretref:guild-id \
-            TWITCH_USERNAMES_FILE=/tmp/twitch_usernames.json
+            DISCORD_TOKEN=secretref:DISCORD_TOKEN \
+            TWITCH_CLIENT_ID=secretref:TWITCH_CLIENT_ID \
+            TWITCH_CLIENT_SECRET=secretref:TWITCH_CLIENT_SECRET \
+            NOTIF_CHANNEL_ID=secretref:NOTIF_CHANNEL_ID \
+            SOCIALS_CHANNEL_ID=secretref:SOCIALS_CHANNEL_ID \
+            GUILD_ID=secretref:GUILD_ID

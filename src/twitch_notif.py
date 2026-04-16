@@ -1,55 +1,85 @@
 import discord
-from discord import app_commands
-import aiohttp
 import asyncio
-from utils import tokens, TWITCH_USERNAMES, STREAMER, TWITCH_CLIENT_ID
-from utils import get_twitch_access_token
+import aiohttp
 
-NOTIF_CHANNEL_ID = int(tokens["NOTIF_CHANNEL_ID"])
-GUILD_ID = int(tokens["GUILD_ID"])
+from utils import (
+    get_env_variable,
+    get_twitch_access_token,
+    load_twitch_usernames,
+    STREAMER
+)
+
+NOTIF_CHANNEL_ID = int(get_env_variable("NOTIF_CHANNEL_ID"))
+GUILD_ID = int(get_env_variable("GUILD_ID"))
+
+TWITCH_CLIENT_ID = get_env_variable("TWITCH_CLIENT_ID")
+TWITCH_USERNAMES = load_twitch_usernames()
+
 ROLE = "Wants Alerts"
-CHECK_INTERVAL = 360  # Sekunder mellom hver sjekk
+CHECK_INTERVAL = 600
 
 async def check_live_status(access_token, usernames):
-    """Check if any Twitch users are live."""
     url = "https://api.twitch.tv/helix/streams"
+
     headers = {
         "Client-ID": TWITCH_CLIENT_ID,
         "Authorization": f"Bearer {access_token}"
     }
+
     live_users = []
+
     async with aiohttp.ClientSession() as session:
         for username in usernames:
             params = {"user_login": username}
+
             async with session.get(url, headers=headers, params=params) as response:
                 data = await response.json()
-                if len(data["data"]) > 0: # User is live
+
+                if len(data.get("data", [])) > 0:
                     live_users.append(username)
+
     return live_users
 
 async def notify_when_live(bot):
-    """Periodically check if Twitch users are live and send notifications."""
-    access_token = await get_twitch_access_token()
-    notified_users = set()  # Keep track of users already notified
-    guild = bot.get_guild(GUILD_ID)
-    if guild is None:
-        print(f"Could not find guild with ID {GUILD_ID}")
-        return
-    role = discord.utils.get(guild.roles, name=ROLE)
+    print("Twitch notifier started")
+
+    notified_users = set()
+
     while True:
         try:
-            live_users = await check_live_status(access_token, TWITCH_USERNAMES)
+            access_token = await get_twitch_access_token()
+
+            guild = bot.get_guild(GUILD_ID)
+            if not guild:
+                print("Guild not found, retrying...")
+                await asyncio.sleep(10)
+                continue
+
+            role = discord.utils.get(guild.roles, name=ROLE)
+            role_mention = role.mention if role else ""
+
             channel = bot.get_channel(NOTIF_CHANNEL_ID)
+
+            live_users = await check_live_status(access_token, TWITCH_USERNAMES)
+            print(f"Live users: {live_users}")
+
             if channel:
                 for user in live_users:
                     if user not in notified_users:
                         if user == STREAMER:
-                            await channel.send(f"I'm now live on Twitch!! Come say hi!! https://www.twitch.tv/{user} {role.mention}")
+                            await channel.send(
+                                f"I'm now live on Twitch!! https://www.twitch.tv/{user} {role_mention}"
+                            )
                         else:
-                            await channel.send(f"{user} is now live on Twitch!! Go check them out!! https://www.twitch.tv/{user} {role.mention}")
+                            await channel.send(
+                                f"{user} is now live! https://www.twitch.tv/{user} {role_mention}"
+                            )
+
                         notified_users.add(user)
-                # Remove users who are no longer live from the notified list
+
                 notified_users = notified_users.intersection(live_users)
+
         except Exception as e:
-            print(f"Error checking Twitch live status: {e}")
+            print(f"Twitch notifier error: {e}")
+
         await asyncio.sleep(CHECK_INTERVAL)
