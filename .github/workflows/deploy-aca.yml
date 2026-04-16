@@ -51,7 +51,6 @@ jobs:
             -g "${{ vars.AZURE_RESOURCE_GROUP }}" \
             --environment "${{ vars.AZURE_CONTAINERAPPS_ENV }}" \
             --image "${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" \
-            --ingress disabled
 
       - name: Set secrets
         run: |
