@@ -4,6 +4,8 @@ import aiohttp
 
 STREAMER = "EGV2008"
 TWITCH_USERNAMES_FILE = os.getenv("TWITCH_USERNAMES_FILE", "twitch_usernames.json")
+# Bundled seed list, used until the bot has written its own list
+DEFAULT_TWITCH_USERNAMES_FILE = os.getenv("DEFAULT_TWITCH_USERNAMES_FILE", "twitch_usernames.json")
 
 def get_env_variable(name):
     value = os.getenv(name)
@@ -12,13 +14,15 @@ def get_env_variable(name):
     return value
 
 # Hent Twitch-brukernavn fra en fil
-# Hvis filen ikke finnes, returner en liste med standard brukernavn
+# Faller tilbake til den medfølgende lista, og til slutt standard brukernavn
 def load_twitch_usernames():
-    try:
-        with open(TWITCH_USERNAMES_FILE, "r") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return [STREAMER]
+    for path in (TWITCH_USERNAMES_FILE, DEFAULT_TWITCH_USERNAMES_FILE):
+        try:
+            with open(path, "r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            continue
+    return [STREAMER]
 
 # Save Twitch usernames to a file
 def save_twitch_usernames(usernames):
