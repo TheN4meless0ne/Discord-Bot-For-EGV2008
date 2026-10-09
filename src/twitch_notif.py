@@ -13,7 +13,6 @@ NOTIF_CHANNEL_ID = int(get_env_variable("NOTIF_CHANNEL_ID"))
 GUILD_ID = int(get_env_variable("GUILD_ID"))
 
 TWITCH_CLIENT_ID = get_env_variable("TWITCH_CLIENT_ID")
-TWITCH_USERNAMES = load_twitch_usernames()
 
 ROLE = "Wants Alerts"
 CHECK_INTERVAL = 600
@@ -60,7 +59,9 @@ async def notify_when_live(bot):
 
             channel = bot.get_channel(NOTIF_CHANNEL_ID)
 
-            live_users = await check_live_status(access_token, TWITCH_USERNAMES)
+            # Les lista på nytt hver runde, så /addtwitch og /removetwitch gjelder uten omstart
+            usernames = load_twitch_usernames()
+            live_users = await check_live_status(access_token, usernames)
             print(f"Live users: {live_users}")
 
             if channel:

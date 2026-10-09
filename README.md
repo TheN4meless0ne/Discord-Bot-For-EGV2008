@@ -48,29 +48,20 @@ Dokumentasjon for discord.py: https://discordpy.readthedocs.io/en/stable/intro.h
 
 Å lese dokumentasjon er en god øvelse!
 
-## Deploy til Azure Container Apps (kort)
-Workflow for deploy ligger i `.github/workflows/deploy-aca.yml`.
+## Deploy til TrueNAS (via GHCR)
+Workflowen `.github/workflows/publish-image.yml` bygger et Docker-image og publiserer det til GitHub Container Registry:
 
-Før deploy må dette settes i GitHub repository settings:
+- push til `main` gir `ghcr.io/then4meless0ne/discord-bot-for-egv2008:latest`
+- en tag som `v1.2.3` gir i tillegg `:1.2.3`
 
-Variables:
-- `AZURE_RESOURCE_GROUP`
-- `AZURE_LOCATION`
-- `AZURE_ACR_NAME`
-- `AZURE_CONTAINERAPPS_ENV`
-- `AZURE_CONTAINER_APP_NAME`
+Ingen secrets trengs i GitHub, workflowen bruker den innebygde `GITHUB_TOKEN`. Etter første kjøring må pakken settes til **Public** under GitHub-profilen > Packages > pakken > Package settings, ellers må TrueNAS ha innlogging mot GHCR.
 
-Secrets:
-- `AZURE_CLIENT_ID`
-- `AZURE_TENANT_ID`
-- `AZURE_SUBSCRIPTION_ID`
-- `DISCORD_TOKEN`
-- `TWITCH_CLIENT_ID`
-- `TWITCH_CLIENT_SECRET`
-- `NOTIF_CHANNEL_ID`
-- `SOCIALS_CHANNEL_ID`
-- `GUILD_ID`
+### Første oppsett på TrueNAS
+1. Lag et dataset til botten, f.eks. `egv-fs-001/apps/discord-bot`, med POSIX-ACL og eier `apps` (568:568).
+2. Gå til Apps > Discover Apps > ⋮ > **Install via YAML**.
+3. Lim inn `deploy/truenas-compose.yml`, fyll inn verdiene og sjekk at stien til datasettet stemmer.
 
-Når dette er satt kan du deploye ved å:
-- pushe til `main`, eller
-- starte workflowen manuelt fra GitHub Actions (`Deploy to Azure Container Apps`).
+Lista over Twitch-brukere lagres i `/data/twitch_usernames.json` i datasettet, så den overlever oppdateringer. Første gang brukes lista som følger med i imaget.
+
+### Oppdateringer
+Med `watchtower`-tjenesten i compose-fila hentes nytt image automatisk innen ca. 5 minutter etter at workflowen er ferdig. Fjerner du den, oppdaterer du manuelt fra Apps-siden i TrueNAS.

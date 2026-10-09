@@ -1,5 +1,5 @@
-version: '3.8'
-
+# Local development. Builds from source and mounts src/ for quick edits.
+# For TrueNAS, use deploy/truenas-compose.yml instead.
 services:
   discord-bot:
     build: .
@@ -7,6 +7,5 @@ services:
       - .env
     volumes:
       - ./src:/app/src
-      - ./twitch_usernames.json:/app/twitch_usernames.json  # Mount the JSON file as a volume
-    command: python src/main.py
-    restart: always
+      - ./data:/data
+    restart: unless-stopped

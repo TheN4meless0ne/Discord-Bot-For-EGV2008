@@ -8,3 +8,5 @@ __pycache__/
 
 # macOS specific files
 .DS_Store
+# Local bot data (twitch usernames list)
+data/
