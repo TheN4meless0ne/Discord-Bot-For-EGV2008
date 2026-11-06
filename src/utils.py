@@ -2,7 +2,7 @@ import json
 import os
 import aiohttp
 
-STREAMER = "EGV2008"
+STREAMER = "egv_08"
 TWITCH_USERNAMES_FILE = os.getenv("TWITCH_USERNAMES_FILE", "twitch_usernames.json")
 # Bundled seed list, used until the bot has written its own list
 DEFAULT_TWITCH_USERNAMES_FILE = os.getenv("DEFAULT_TWITCH_USERNAMES_FILE", "twitch_usernames.json")
