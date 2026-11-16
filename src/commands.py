@@ -72,6 +72,10 @@ async def setup(
     if fields:
         await db.upsert_guild_config(conn, interaction.guild_id, **fields)
 
+    # The server's own streamer is always watched
+    if streamer:
+        await db.add_watched(conn, interaction.guild_id, streamer)
+
     config = await db.get_guild_config(conn, interaction.guild_id)
 
     def show(value, template):
