@@ -4,7 +4,8 @@ FROM python:3.12-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     TWITCH_USERNAMES_FILE=/data/twitch_usernames.json \
-    DEFAULT_TWITCH_USERNAMES_FILE=/app/twitch_usernames.json
+    DEFAULT_TWITCH_USERNAMES_FILE=/app/twitch_usernames.json \
+    DATABASE_PATH=/data/bot.sqlite3
 
 WORKDIR /app
 
