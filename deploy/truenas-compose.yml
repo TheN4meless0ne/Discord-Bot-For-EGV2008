@@ -14,14 +14,12 @@ services:
       DISCORD_TOKEN: "changeme"
       TWITCH_CLIENT_ID: "changeme"
       TWITCH_CLIENT_SECRET: "changeme"
-      NOTIF_CHANNEL_ID: "changeme"
-      SOCIALS_CHANNEL_ID: "changeme"
-      GUILD_ID: "changeme"
       TZ: "Europe/Oslo"
     volumes:
       - /mnt/egv-fs-001/apps/discord-bot:/data
     labels:
       com.centurylinklabs.watchtower.enable: "true"
+      com.centurylinklabs.watchtower.stop-signal: "SIGINT"
 
   # Optional: auto-update the bot when a new image lands on GHCR.
   # Uses the maintained fork (the original containrrr/watchtower is archived).

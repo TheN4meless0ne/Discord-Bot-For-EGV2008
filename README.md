@@ -19,7 +19,7 @@ Start med å kopiere `.env.example` til `.env`, og fyll inn verdiene.
 
 Følg stegene her for å lage en bot: https://discordpy.readthedocs.io/en/latest/discord.html.
 
-Merk at du må gi botten `Message Content Intents` under `Special Privileges`, for å kunne lese meldinger som blir sendt i en chat.
+Botten bruker bare slash-kommandoer og trenger ingen `Privileged Gateway Intents`.
 
 
 ## Kjør botten og rediger koden
@@ -61,7 +61,14 @@ Ingen secrets trengs i GitHub, workflowen bruker den innebygde `GITHUB_TOKEN`. E
 2. Gå til Apps > Discover Apps > ⋮ > **Install via YAML**.
 3. Lim inn `deploy/truenas-compose.yml`, fyll inn verdiene og sjekk at stien til datasettet stemmer.
 
-Lista over Twitch-brukere lagres i `/data/twitch_usernames.json` i datasettet, så den overlever oppdateringer. Første gang brukes lista som følger med i imaget.
+Innstillinger og lista over Twitch-brukere lagres per server i `/data/bot.sqlite3` i datasettet, så de overlever oppdateringer.
+
+### Oppsett per server
+Kommandoene under krever `Manage Server` som standard. Hvem som får bruke dem kan endres under Server Settings > Integrations.
+
+- `/setup` viser eller endrer varslingskanal, socials-kanal, varslingsrolle og streamer.
+- `/addtwitch`, `/rmtwitch` og `/listtwitch` styrer hvilke Twitch-brukere serveren får varsler om.
+- `/botprofile` endrer navn og profilbilde for botten på serveren.
 
 ### Oppdateringer
 Med `watchtower`-tjenesten i compose-fila hentes nytt image automatisk innen ca. 5 minutter etter at workflowen er ferdig. Fjerner du den, oppdaterer du manuelt fra Apps-siden i TrueNAS.
