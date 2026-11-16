@@ -1,5 +1,4 @@
 # SQLite database for per-server config. All SQL lives here.
-import json
 import os
 
 import aiosqlite
@@ -53,14 +52,19 @@ async def _migrate(conn: aiosqlite.Connection) -> None:
         await conn.executescript(SCHEMA_V1)
         version = 1
 
-    # Add new schema versions here (if version < 2: ...)
+    # v2: remember which stream was announced
+    if version < 2:
+        await conn.execute("ALTER TABLE notified ADD COLUMN stream_id TEXT")
+        version = 2
+
+    # Add new schema versions here (if version < 3: ...)
 
     await conn.execute(f"PRAGMA user_version = {version}")
     await conn.commit()
 
 
 # Twitch logins are case-insensitive, store them lower-case
-def _normalise(login: str) -> str:
+def normalise(login: str) -> str:
     return login.strip().lower()
 
 
@@ -110,7 +114,7 @@ async def add_watched(conn, guild_id: int, login: str) -> bool:
     await upsert_guild_config(conn, guild_id)
     cur = await conn.execute(
         "INSERT OR IGNORE INTO watched (guild_id, twitch_login) VALUES (?, ?)",
-        (guild_id, _normalise(login)),
+        (guild_id, normalise(login)),
     )
     await conn.commit()
     return cur.rowcount == 1
@@ -118,7 +122,7 @@ async def add_watched(conn, guild_id: int, login: str) -> bool:
 
 # Remove a Twitch login. Returns False if not watched
 async def remove_watched(conn, guild_id: int, login: str) -> bool:
-    login = _normalise(login)
+    login = normalise(login)
     cur = await conn.execute(
         "DELETE FROM watched WHERE guild_id = ? AND twitch_login = ?",
         (guild_id, login),
@@ -148,49 +152,28 @@ async def all_watched_logins(conn) -> list[str]:
         return [row["twitch_login"] for row in await cur.fetchall()]
 
 
-# Logins already announced in a server
-async def get_notified(conn, guild_id: int) -> set[str]:
+# Number of Twitch logins watched by a server
+async def count_watched(conn, guild_id: int) -> int:
     async with conn.execute(
-        "SELECT twitch_login FROM notified WHERE guild_id = ?", (guild_id,)
+        "SELECT COUNT(*) FROM watched WHERE guild_id = ?", (guild_id,)
     ) as cur:
-        return {row["twitch_login"] for row in await cur.fetchall()}
+        (count,) = await cur.fetchone()
+        return count
 
 
-# Replace the announced logins with whoever is live now
-async def set_notified(conn, guild_id: int, live_logins: set[str]) -> None:
-    await conn.execute("DELETE FROM notified WHERE guild_id = ?", (guild_id,))
-    await conn.executemany(
-        "INSERT INTO notified (guild_id, twitch_login) VALUES (?, ?)",
-        [(guild_id, login) for login in live_logins],
-    )
-    await conn.commit()
+# Announced logins in a server, mapped to the announced stream ID
+async def get_notified(conn, guild_id: int) -> dict[str, str | None]:
+    async with conn.execute(
+        "SELECT twitch_login, stream_id FROM notified WHERE guild_id = ?", (guild_id,)
+    ) as cur:
+        return {row["twitch_login"]: row["stream_id"] for row in await cur.fetchall()}
 
 
-# Import the old env vars and twitch_usernames.json for the original server.
-# Skipped if the server already has a row. Returns True if imported
-async def import_legacy_config(conn, guild_id: int, notif_channel_id, socials_channel_id,
-                               streamer_login: str, usernames_files: list[str]) -> bool:
-    if await get_guild_config(conn, guild_id) is not None:
-        return False
-
-    usernames = []
-    for path in usernames_files:
-        try:
-            with open(path, "r") as file:
-                usernames = json.load(file)
-            break
-        except FileNotFoundError:
-            continue
-
+# Remember that a stream has been announced in a server
+async def mark_notified(conn, guild_id: int, login: str, stream_id: str) -> None:
     await conn.execute(
-        """INSERT INTO guild_config
-           (guild_id, notif_channel_id, socials_channel_id, streamer_login)
-           VALUES (?, ?, ?, ?)""",
-        (guild_id, notif_channel_id, socials_channel_id, _normalise(streamer_login)),
-    )
-    await conn.executemany(
-        "INSERT OR IGNORE INTO watched (guild_id, twitch_login) VALUES (?, ?)",
-        [(guild_id, _normalise(name)) for name in usernames],
+        """INSERT INTO notified (guild_id, twitch_login, stream_id) VALUES (?, ?, ?)
+           ON CONFLICT (guild_id, twitch_login) DO UPDATE SET stream_id = excluded.stream_id""",
+        (guild_id, login, stream_id),
     )
     await conn.commit()
-    return True
