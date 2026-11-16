@@ -58,7 +58,9 @@ async def setup(
     if alert_role:
         fields["alert_role_id"] = alert_role.id
         if not alert_role.mentionable and not interaction.guild.me.guild_permissions.mention_everyone:
-            warnings.append(f"{alert_role.mention} is not mentionable, so it won't be pinged.")
+            warnings.append(
+                f'I need the "Mention @everyone, @here and All Roles" permission to ping {alert_role.name}.'
+            )
 
     if streamer:
         streamer = db.normalise(streamer)
@@ -74,6 +76,15 @@ async def setup(
 
     config = await db.get_guild_config(conn, interaction.guild_id)
 
+    # The @everyone role has the server's ID and can't be mentioned by ID
+    alert_role_id = config and config["alert_role_id"]
+    if not alert_role_id:
+        alert_role_text = "not set"
+    elif alert_role_id == interaction.guild_id:
+        alert_role_text = "@everyone"
+    else:
+        alert_role_text = f"<@&{alert_role_id}>"
+
     def show(value, template):
         return template.format(value) if value else "not set"
 
@@ -81,7 +92,7 @@ async def setup(
         "Settings saved." if fields else "Current settings:",
         "Notification channel: " + show(config and config["notif_channel_id"], "<#{}>"),
         "Socials channel: " + show(config and config["socials_channel_id"], "<#{}>"),
-        "Alert role: " + show(config and config["alert_role_id"], "<@&{}>"),
+        "Alert role: " + alert_role_text,
         "Streamer: " + show(config and config["streamer_login"], "{}"),
     ]
 
