@@ -69,6 +69,11 @@ async def get_live_streams(logins):
     return live
 
 
+# Text that mentions a role. The @everyone role can't be mentioned by ID
+def role_text(role):
+    return "@everyone" if role.is_default() else role.mention
+
+
 # Announce new streams in one server
 async def notify_guild(bot, config, live):
     guild = bot.get_guild(config["guild_id"])
@@ -77,7 +82,7 @@ async def notify_guild(bot, config, live):
         return
 
     role = guild.get_role(config["alert_role_id"]) if config["alert_role_id"] else None
-    role_mention = role.mention if role else ""
+    role_mention = role_text(role) if role else ""
     allowed = discord.AllowedMentions.none()
     if role:
         allowed = discord.AllowedMentions(
