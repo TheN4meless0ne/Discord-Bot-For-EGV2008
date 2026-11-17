@@ -57,7 +57,16 @@ async def _migrate(conn: aiosqlite.Connection) -> None:
         await conn.execute("ALTER TABLE notified ADD COLUMN stream_id TEXT")
         version = 2
 
-    # Add new schema versions here (if version < 3: ...)
+    # v3: changelog messages
+    if version < 3:
+        await conn.execute("ALTER TABLE guild_config ADD COLUMN changelog_channel_id INTEGER")
+        await conn.execute(
+            "ALTER TABLE guild_config ADD COLUMN changelog_enabled INTEGER NOT NULL DEFAULT 0"
+        )
+        await conn.execute("ALTER TABLE guild_config ADD COLUMN changelog_sha TEXT")
+        version = 3
+
+    # Add new schema versions here (if version < 4: ...)
 
     await conn.execute(f"PRAGMA user_version = {version}")
     await conn.commit()
@@ -78,7 +87,10 @@ async def get_guild_config(conn, guild_id: int):
 
 # Create the server's row if missing, then update the given fields
 async def upsert_guild_config(conn, guild_id: int, **fields) -> None:
-    allowed = {"notif_channel_id", "socials_channel_id", "alert_role_id", "streamer_login"}
+    allowed = {
+        "notif_channel_id", "socials_channel_id", "alert_role_id", "streamer_login",
+        "changelog_channel_id", "changelog_enabled", "changelog_sha"
+    }
     unknown = set(fields) - allowed
     if unknown:
         raise ValueError(f"Unknown guild_config fields: {unknown}")
@@ -105,6 +117,15 @@ async def delete_guild(conn, guild_id: int) -> None:
 async def configured_guilds(conn):
     async with conn.execute(
         "SELECT * FROM guild_config WHERE notif_channel_id IS NOT NULL"
+    ) as cur:
+        return await cur.fetchall()
+
+
+# Servers with changelog messages turned on
+async def changelog_guilds(conn):
+    async with conn.execute(
+        """SELECT * FROM guild_config
+           WHERE changelog_enabled = 1 AND changelog_channel_id IS NOT NULL"""
     ) as cur:
         return await cur.fetchall()
 
