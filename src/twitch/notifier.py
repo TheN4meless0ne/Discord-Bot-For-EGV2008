@@ -3,8 +3,8 @@ import aiohttp
 import discord
 from discord.ext import tasks
 
-import db
-from utils import get_env_variable
+from core import db
+from core.utils import get_env_variable
 
 TWITCH_CLIENT_ID = get_env_variable("TWITCH_CLIENT_ID")
 TWITCH_CLIENT_SECRET = get_env_variable("TWITCH_CLIENT_SECRET")

@@ -5,6 +5,7 @@ __pycache__/
 # Ignore the .qodo directory and environment variable file
 .qodo
 .env
+.venv/
 
 # macOS specific files
 .DS_Store

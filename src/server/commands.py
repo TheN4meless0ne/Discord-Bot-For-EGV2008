@@ -1,30 +1,9 @@
-import re
 from typing import Optional
 
 import discord
 from discord import app_commands
 
-import db
-from changelog import BOT_VERSION
-
-# Twitch logins: letters, numbers and underscores
-LOGIN_RE = re.compile(r"[a-z0-9][a-z0-9_]{2,24}")
-MAX_WATCHED = 100
 MAX_AVATAR_BYTES = 8 * 1024 * 1024
-
-def chunk_list(items, limit=1900):
-    chunk = ""
-    for item in items:
-        if len(chunk) + len(item) + 1 > limit:
-            yield chunk
-            chunk = item + "\n"
-        else:
-            chunk += item + "\n"
-    if chunk:
-        yield chunk
-
-# The management commands need Manage Server by default.
-# Admins can change who may use them under Server Settings > Integrations.
 
 # /setup
 @app_commands.command(name="setup", description="Show or change this server's bot settings.")
@@ -158,135 +137,6 @@ async def botprofile(
 
     await interaction.followup.send("Updated my profile for this server.", ephemeral=True)
 
-# /twitch add, /twitch remove, /twitch list
-twitch = app_commands.Group(
-    name="twitch",
-    description="Manage the Twitch usernames monitored in this server.",
-    guild_only=True,
-    allowed_contexts=app_commands.AppCommandContext(guild=True),
-    default_permissions=discord.Permissions(manage_guild=True)
-)
-
-# /twitch add
-@twitch.command(name="add", description="Add a Twitch username to this server's list.")
-@app_commands.describe(username="The Twitch username to add.")
-async def twitch_add(interaction: discord.Interaction, username: str):
-    conn = interaction.client.db
-    username = db.normalise(username)
-
-    if not LOGIN_RE.fullmatch(username):
-        await interaction.response.send_message(
-            "That is not a valid Twitch username.", ephemeral=True
-        )
-        return
-
-    if await db.count_watched(conn, interaction.guild_id) >= MAX_WATCHED:
-        await interaction.response.send_message(
-            f"This server already has {MAX_WATCHED} Twitch usernames, remove one first.",
-            ephemeral=True
-        )
-        return
-
-    if await db.add_watched(conn, interaction.guild_id, username):
-        print(f"Added Twitch user {username} in guild {interaction.guild_id}")
-
-        await interaction.response.send_message(
-            f"Added {username} to the Twitch usernames list.", ephemeral=True
-        )
-    else:
-        await interaction.response.send_message(
-            f"{username} is already in the Twitch usernames list.", ephemeral=True
-        )
-
-# /twitch remove
-@twitch.command(name="remove", description="Remove a Twitch username from this server's list.")
-@app_commands.describe(username="The Twitch username to remove.")
-async def twitch_remove(interaction: discord.Interaction, username: str):
-    username = db.normalise(username)
-
-    if await db.remove_watched(interaction.client.db, interaction.guild_id, username):
-        print(f"Removed Twitch user {username} in guild {interaction.guild_id}")
-
-        await interaction.response.send_message(
-            f"Removed {username} from the Twitch usernames list.", ephemeral=True
-        )
-    else:
-        await interaction.response.send_message(
-            "That username is not in the Twitch usernames list.", ephemeral=True
-        )
-
-# Suggest usernames from this server's list while typing
-@twitch_remove.autocomplete("username")
-async def twitch_remove_autocomplete(interaction: discord.Interaction, current: str):
-    usernames = await db.list_watched(interaction.client.db, interaction.guild_id)
-    current = current.strip().lower()
-
-    # Discord shows at most 25 suggestions
-    return [
-        app_commands.Choice(name=name, value=name)
-        for name in usernames if current in name
-    ][:25]
-
-# /twitch list
-@twitch.command(name="list", description="List the Twitch usernames monitored in this server.")
-async def twitch_list(interaction: discord.Interaction):
-    usernames = await db.list_watched(interaction.client.db, interaction.guild_id)
-
-    if usernames:
-        message = "Currently monitored Twitch usernames:\n"
-
-        for i, chunk in enumerate(chunk_list(usernames)):
-            if i == 0:
-                await interaction.response.send_message(
-                    message + chunk,
-                    ephemeral=True
-                )
-            else:
-                await interaction.followup.send(chunk, ephemeral=True)
-
-    else:
-        await interaction.response.send_message(
-            "No Twitch usernames are currently being monitored.",
-            ephemeral=True
-        )
-
-# /changelog on, /changelog off
-changelog = app_commands.Group(
-    name="changelog",
-    description="Post a message here when the bot is updated.",
-    guild_only=True,
-    allowed_contexts=app_commands.AppCommandContext(guild=True),
-    default_permissions=discord.Permissions(manage_guild=True)
-)
-
-# /changelog on
-@changelog.command(name="on", description="Post update messages in a channel.")
-@app_commands.describe(channel="Channel for update messages.")
-async def changelog_on(interaction: discord.Interaction, channel: discord.TextChannel):
-    permissions = channel.permissions_for(interaction.guild.me)
-    if not (permissions.view_channel and permissions.send_messages):
-        await interaction.response.send_message(
-            f"I can't send messages in {channel.mention}.", ephemeral=True
-        )
-        return
-
-    # Start from the running version, so earlier updates are not posted
-    await db.upsert_guild_config(
-        interaction.client.db, interaction.guild_id,
-        changelog_enabled=1, changelog_channel_id=channel.id, changelog_sha=BOT_VERSION or None
-    )
-
-    await interaction.response.send_message(
-        f"Update messages will be posted in {channel.mention}.", ephemeral=True
-    )
-
-# /changelog off
-@changelog.command(name="off", description="Stop posting update messages.")
-async def changelog_off(interaction: discord.Interaction):
-    await db.upsert_guild_config(interaction.client.db, interaction.guild_id, changelog_enabled=0)
-
-    await interaction.response.send_message("Update messages are turned off.", ephemeral=True)
-
 # /socials
 @app_commands.command(name="socials", description="Send to links channel.")
 @app_commands.guild_only()
@@ -308,5 +158,4 @@ async def socials(interaction: discord.Interaction):
             ephemeral=True
         )
 
-# List of commands to register with the bot
-commands_list = [setup, botprofile, twitch, changelog, socials]
+COMMANDS = [setup, botprofile, socials]
