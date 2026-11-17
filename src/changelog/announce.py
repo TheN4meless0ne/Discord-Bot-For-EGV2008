@@ -4,7 +4,7 @@ import re
 import aiohttp
 import discord
 
-import db
+from core import db
 
 # Set at build time by the GitHub workflow, empty when running from source
 BOT_VERSION = os.getenv("BOT_VERSION", "")

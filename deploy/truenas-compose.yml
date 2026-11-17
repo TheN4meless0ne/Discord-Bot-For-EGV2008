@@ -1,12 +1,7 @@
 # Paste into TrueNAS: Apps > Discover Apps > ⋮ > Install via YAML.
-# Before installing:
-#   1. Create a dataset for the bot's data, e.g. egv-fs-001/apps/discord-bot,
-#      owned by apps (568:568). Use POSIX ACLs, not NFSv4.
-#   2. Fill in the values below. They are stored in the app config on TrueNAS.
-
 services:
   discord-bot:
-    image: ghcr.io/then4meless0ne/discord-bot-for-nmls:latest
+    image: ghcr.io/then4meless0ne/discord-bot-nmls:latest
     pull_policy: always
     restart: unless-stopped
     user: "568:568"
@@ -16,15 +11,11 @@ services:
       TWITCH_CLIENT_SECRET: "changeme"
       TZ: "Europe/Oslo"
     volumes:
-      - /mnt/egv-fs-001/apps/discord-bot:/data
+      - /mnt/TheShire/apps/discord-bot:/data
     labels:
       com.centurylinklabs.watchtower.enable: "true"
       com.centurylinklabs.watchtower.stop-signal: "SIGINT"
 
-  # Optional: auto-update the bot when a new image lands on GHCR.
-  # Uses the maintained fork (the original containrrr/watchtower is archived).
-  # Only containers with the label above are touched.
-  # Remove this service if you'd rather update manually from the TrueNAS UI.
   watchtower:
     image: nickfedor/watchtower:latest
     restart: unless-stopped
