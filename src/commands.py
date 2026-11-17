@@ -5,6 +5,7 @@ import discord
 from discord import app_commands
 
 import db
+from changelog import BOT_VERSION
 
 # Twitch logins: letters, numbers and underscores
 LOGIN_RE = re.compile(r"[a-z0-9][a-z0-9_]{2,24}")
@@ -98,6 +99,11 @@ async def setup(
         "Socials channel: " + show(config and config["socials_channel_id"], "<#{}>"),
         "Alert role: " + alert_role_text,
         "Streamer: " + show(config and config["streamer_login"], "{}"),
+        "Changelog: " + (
+            f"on in <#{config['changelog_channel_id']}>"
+            if config and config["changelog_enabled"] and config["changelog_channel_id"]
+            else "off"
+        ),
     ]
 
     await interaction.response.send_message("\n".join(lines + warnings), ephemeral=True)
@@ -244,6 +250,43 @@ async def twitch_list(interaction: discord.Interaction):
             ephemeral=True
         )
 
+# /changelog on, /changelog off
+changelog = app_commands.Group(
+    name="changelog",
+    description="Post a message here when the bot is updated.",
+    guild_only=True,
+    allowed_contexts=app_commands.AppCommandContext(guild=True),
+    default_permissions=discord.Permissions(manage_guild=True)
+)
+
+# /changelog on
+@changelog.command(name="on", description="Post update messages in a channel.")
+@app_commands.describe(channel="Channel for update messages.")
+async def changelog_on(interaction: discord.Interaction, channel: discord.TextChannel):
+    permissions = channel.permissions_for(interaction.guild.me)
+    if not (permissions.view_channel and permissions.send_messages):
+        await interaction.response.send_message(
+            f"I can't send messages in {channel.mention}.", ephemeral=True
+        )
+        return
+
+    # Start from the running version, so earlier updates are not posted
+    await db.upsert_guild_config(
+        interaction.client.db, interaction.guild_id,
+        changelog_enabled=1, changelog_channel_id=channel.id, changelog_sha=BOT_VERSION or None
+    )
+
+    await interaction.response.send_message(
+        f"Update messages will be posted in {channel.mention}.", ephemeral=True
+    )
+
+# /changelog off
+@changelog.command(name="off", description="Stop posting update messages.")
+async def changelog_off(interaction: discord.Interaction):
+    await db.upsert_guild_config(interaction.client.db, interaction.guild_id, changelog_enabled=0)
+
+    await interaction.response.send_message("Update messages are turned off.", ephemeral=True)
+
 # /socials
 @app_commands.command(name="socials", description="Send to links channel.")
 @app_commands.guild_only()
@@ -266,4 +309,4 @@ async def socials(interaction: discord.Interaction):
         )
 
 # List of commands to register with the bot
-commands_list = [setup, botprofile, twitch, socials]
+commands_list = [setup, botprofile, twitch, changelog, socials]

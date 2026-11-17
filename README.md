@@ -69,6 +69,7 @@ Kommandoene under krever `Manage Server` som standard. Hvem som får bruke dem k
 - `/setup` viser eller endrer varslingskanal, socials-kanal, varslingsrolle og streamer.
 - `/twitch add`, `/twitch remove` og `/twitch list` styrer hvilke Twitch-brukere serveren får varsler om.
 - `/botprofile` endrer navn og profilbilde for botten på serveren.
+- `/changelog on` og `/changelog off` slår av og på en melding når botten er oppdatert, med lista over endringer i `main`.
 
 ### Oppdateringer
 Med `watchtower`-tjenesten i compose-fila hentes nytt image automatisk innen ca. 5 minutter etter at workflowen er ferdig. Fjerner du den, oppdaterer du manuelt fra Apps-siden i TrueNAS.

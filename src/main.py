@@ -5,7 +5,10 @@ from dotenv import load_dotenv
 # Load .env first, the imports below read env vars
 load_dotenv()
 
+import asyncio
+
 import db
+from changelog import announce_changes
 from commands import commands_list
 from twitch_notif import notify_when_live
 from utils import get_env_variable
@@ -22,6 +25,7 @@ class Bot(commands.Bot):
             allowed_mentions=discord.AllowedMentions.none()
         )
         self.db = None
+        self.changelog_task = None
 
     # Runs once at startup, before connecting to Discord
     async def setup_hook(self):
@@ -35,6 +39,9 @@ class Bot(commands.Bot):
         print("Starting Twitch notifier...")
         notify_when_live.start(self)
 
+        # Once per start, after an update has been deployed
+        self.changelog_task = asyncio.create_task(announce_changes(self))
+
     async def on_ready(self):
         print(f"Logged in as {self.user} in {len(self.guilds)} server(s)")
 
@@ -45,6 +52,8 @@ class Bot(commands.Bot):
 
     async def close(self):
         notify_when_live.cancel()
+        if self.changelog_task is not None:
+            self.changelog_task.cancel()
         if self.db is not None:
             await self.db.close()
         await super().close()
