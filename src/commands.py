@@ -152,12 +152,19 @@ async def botprofile(
 
     await interaction.followup.send("Updated my profile for this server.", ephemeral=True)
 
-# /addtwitch
-@app_commands.command(name="addtwitch", description="Add a Twitch username to this server's list.")
+# /twitch add, /twitch remove, /twitch list
+twitch = app_commands.Group(
+    name="twitch",
+    description="Manage the Twitch usernames monitored in this server.",
+    guild_only=True,
+    allowed_contexts=app_commands.AppCommandContext(guild=True),
+    default_permissions=discord.Permissions(manage_guild=True)
+)
+
+# /twitch add
+@twitch.command(name="add", description="Add a Twitch username to this server's list.")
 @app_commands.describe(username="The Twitch username to add.")
-@app_commands.guild_only()
-@app_commands.default_permissions(manage_guild=True)
-async def addtwitch(interaction: discord.Interaction, username: str):
+async def twitch_add(interaction: discord.Interaction, username: str):
     conn = interaction.client.db
     username = db.normalise(username)
 
@@ -185,12 +192,10 @@ async def addtwitch(interaction: discord.Interaction, username: str):
             f"{username} is already in the Twitch usernames list.", ephemeral=True
         )
 
-# /rmtwitch
-@app_commands.command(name="rmtwitch", description="Remove a Twitch username from this server's list.")
+# /twitch remove
+@twitch.command(name="remove", description="Remove a Twitch username from this server's list.")
 @app_commands.describe(username="The Twitch username to remove.")
-@app_commands.guild_only()
-@app_commands.default_permissions(manage_guild=True)
-async def rmtwitch(interaction: discord.Interaction, username: str):
+async def twitch_remove(interaction: discord.Interaction, username: str):
     username = db.normalise(username)
 
     if await db.remove_watched(interaction.client.db, interaction.guild_id, username):
@@ -204,14 +209,21 @@ async def rmtwitch(interaction: discord.Interaction, username: str):
             "That username is not in the Twitch usernames list.", ephemeral=True
         )
 
-# /listtwitch
-@app_commands.command(
-    name="listtwitch",
-    description="List the Twitch usernames monitored in this server."
-)
-@app_commands.guild_only()
-@app_commands.default_permissions(manage_guild=True)
-async def listtwitch(interaction: discord.Interaction):
+# Suggest usernames from this server's list while typing
+@twitch_remove.autocomplete("username")
+async def twitch_remove_autocomplete(interaction: discord.Interaction, current: str):
+    usernames = await db.list_watched(interaction.client.db, interaction.guild_id)
+    current = current.strip().lower()
+
+    # Discord shows at most 25 suggestions
+    return [
+        app_commands.Choice(name=name, value=name)
+        for name in usernames if current in name
+    ][:25]
+
+# /twitch list
+@twitch.command(name="list", description="List the Twitch usernames monitored in this server.")
+async def twitch_list(interaction: discord.Interaction):
     usernames = await db.list_watched(interaction.client.db, interaction.guild_id)
 
     if usernames:
@@ -254,4 +266,4 @@ async def socials(interaction: discord.Interaction):
         )
 
 # List of commands to register with the bot
-commands_list = [setup, botprofile, addtwitch, rmtwitch, listtwitch, socials]
+commands_list = [setup, botprofile, twitch, socials]

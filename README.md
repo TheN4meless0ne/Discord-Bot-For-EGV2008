@@ -67,7 +67,7 @@ Innstillinger og lista over Twitch-brukere lagres per server i `/data/bot.sqlite
 Kommandoene under krever `Manage Server` som standard. Hvem som får bruke dem kan endres under Server Settings > Integrations.
 
 - `/setup` viser eller endrer varslingskanal, socials-kanal, varslingsrolle og streamer.
-- `/addtwitch`, `/rmtwitch` og `/listtwitch` styrer hvilke Twitch-brukere serveren får varsler om.
+- `/twitch add`, `/twitch remove` og `/twitch list` styrer hvilke Twitch-brukere serveren får varsler om.
 - `/botprofile` endrer navn og profilbilde for botten på serveren.
 
 ### Oppdateringer

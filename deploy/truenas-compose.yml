@@ -6,7 +6,7 @@
 
 services:
   discord-bot:
-    image: ghcr.io/then4meless0ne/discord-bot-for-egv2008:latest
+    image: ghcr.io/then4meless0ne/discord-bot-for-nmls:latest
     pull_policy: always
     restart: unless-stopped
     user: "568:568"
