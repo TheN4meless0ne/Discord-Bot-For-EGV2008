@@ -2,6 +2,9 @@ from typing import Optional
 
 import discord
 from discord import app_commands
+from core import db
+
+from twitch.commands import LOGIN_RE
 
 MAX_AVATAR_BYTES = 8 * 1024 * 1024
 
