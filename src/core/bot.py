@@ -9,6 +9,7 @@ from changelog.commands import COMMANDS as CHANGELOG_COMMANDS
 from server.commands import COMMANDS as SERVER_COMMANDS
 from twitch.commands import COMMANDS as TWITCH_COMMANDS
 from twitch.notifier import notify_when_live
+from poll.commands import COMMANDS as POLL_COMMANDS
 
 
 class Bot(commands.Bot):
@@ -27,7 +28,7 @@ class Bot(commands.Bot):
         self.db = await db.connect()
         print(f"Database ready at {db.DATABASE_PATH}")
 
-        for command in SERVER_COMMANDS + TWITCH_COMMANDS + CHANGELOG_COMMANDS:
+        for command in SERVER_COMMANDS + TWITCH_COMMANDS + CHANGELOG_COMMANDS + POLL_COMMANDS:
             self.tree.add_command(command)
         await self.tree.sync()
 
